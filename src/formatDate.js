@@ -23,17 +23,13 @@
  * @returns {string}
  */
 function formatDate(date, fromFormat, toFormat) {
-  let separator = '';
+  const separators = [...new Set(date.match(/[^A-Za-z0-9]/g))];
 
-  const separators = ['/', '.', '-'];
+  if (separators.length === 0) {
+    throw new Error('No valid separators found in input date');
+  }
 
-  separators.forEach((sep) => {
-    if (date.includes(sep)) {
-      separator = sep;
-    }
-  });
-
-  const dateParts = date.split(separator);
+  const dateParts = date.split(new RegExp(`[${separators.join('')}]`));
 
   const dateMap = {};
 
@@ -41,23 +37,22 @@ function formatDate(date, fromFormat, toFormat) {
     dateMap[format] = dateParts[index];
   });
 
-  let newDate = '';
+  if (dateMap.YY || dateMap.YYYY) {
+    const year = dateMap.YYYY || dateMap.YY;
 
-  for (let i = 0; i < toFormat.length; i++) {
-    const format = toFormat[i];
-
-    if (format === 'YYYY') {
-      const year = dateMap['YY'];
-
-      newDate += (year < 30 ? '20' : '19') + year;
-    } else {
-      newDate += dateMap[format];
+    if (year.length === 2) {
+      dateMap.YYYY = parseInt(year, 10) < 30 ? `20${year}` : `19${year}`;
     }
-
-    if (i < toFormat.length - 1) {
-      newDate += separator;
-    }
+    dateMap.YY = dateMap.YYYY.slice(-2);
   }
+
+  const toSeparator =
+    toFormat.find((char) => ['/', '.', '-'].includes(char)) || '-';
+
+  const newDate = toFormat
+    .filter((format) => format !== toSeparator)
+    .map((format) => dateMap[format] || format)
+    .join(toSeparator);
 
   return newDate;
 }
