@@ -6,55 +6,41 @@
  * @param {string[]} toFormat
  *
  * @returns {string}
+ *
+/**
+ * @param {string} date
+ * @param {string[]} fromFormat
+ * @param {string[]} toFormat
+ *
+ * @returns {string}
  */
 
-/**
- * @param {string} date
- * @param {string[]} fromFormat
- * @param {string[]} toFormat
- *
- * @returns {string}
- */
-/**
- * @param {string} date
- * @param {string[]} fromFormat
- * @param {string[]} toFormat
- *
- * @returns {string}
- */
 function formatDate(date, fromFormat, toFormat) {
-  const separators = [...new Set(date.match(/[^A-Za-z0-9]/g))];
+  const partDate = date.split(fromFormat[fromFormat.length - 1]);
+  const dateProperties = {};
+  const updatedDate = [];
 
-  if (separators.length === 0) {
-    throw new Error('No valid separators found in input date');
+  for (let i = 0; i < 3; i++) {
+    dateProperties[fromFormat[i]] = partDate[i];
   }
 
-  const dateParts = date.split(new RegExp(`[${separators.join('')}]`));
+  if (fromFormat.includes('YYYY') && toFormat.includes('YY')) {
+    dateProperties['YY'] = dateProperties['YYYY'].slice(-2);
+  }
 
-  const dateMap = {};
-
-  fromFormat.forEach((format, index) => {
-    dateMap[format] = dateParts[index];
-  });
-
-  if (dateMap.YY || dateMap.YYYY) {
-    const year = dateMap.YYYY || dateMap.YY;
-
-    if (year.length === 2) {
-      dateMap.YYYY = parseInt(year, 10) < 30 ? `20${year}` : `19${year}`;
+  if (fromFormat.includes('YY') && toFormat.includes('YYYY')) {
+    if (dateProperties.YY < 30) {
+      dateProperties['YYYY'] = '20' + dateProperties['YY'];
+    } else {
+      dateProperties['YYYY'] = '19' + dateProperties['YY'];
     }
-    dateMap.YY = dateMap.YYYY.slice(-2);
   }
 
-  const toSeparator =
-    toFormat.find((char) => ['/', '.', '-'].includes(char)) || '-';
+  for (let i = 0; i < 3; i++) {
+    updatedDate.push(dateProperties[toFormat[i]]);
+  }
 
-  const newDate = toFormat
-    .filter((format) => format !== toSeparator)
-    .map((format) => dateMap[format] || format)
-    .join(toSeparator);
-
-  return newDate;
+  return updatedDate.join(toFormat[3]);
 }
 
 module.exports = formatDate;
